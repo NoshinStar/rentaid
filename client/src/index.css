@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand: #824B39;
+  --color-brand-dark: #693A2C;
+  --color-accent: #F5A65B;
+  --color-page: #FFF8EF;
+  --color-card: #FFFFFF;
+  --color-ink: #172033;
+  --color-muted: #5B6573;
+  --color-line: #A8927F;
+  --font-heading: "Fraunces", serif;
+  --font-sans: "Manrope", sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
