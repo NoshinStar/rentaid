@@ -1,7 +1,19 @@
+import { Routes, Route } from 'react-router-dom'
+import PublicLayout from './layouts/PublicLayout'
+import Home from './pages/Home'
+import Listings from './pages/Listings'
+import Login from './pages/Login'
+import Register from './pages/Register'
+
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-sky-100">
-      <h1 className="text-4xl font-bold text-orange-700">RentAid</h1>
-    </div>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/listings" element={<Listings />} />
+      </Route>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+    </Routes>
   )
 }
