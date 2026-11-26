@@ -1,12 +1,14 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import Logo from '../components/Logo'
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import Logo from "../components/Logo"
+import { useAuth } from "../context/AuthContext"
+import { authErrorMessage } from "../utils/authErrors"
 
 const inputBase =
-  'h-10 w-full rounded-lg border border-white/80 bg-white/70 pl-9 pr-3 text-sm font-medium text-ink ' +
-  'placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand'
-const labelCls = 'mb-1 mt-3 block text-[11px] font-bold uppercase tracking-wide text-ink/80'
-const iconCls = 'pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-brand'
+  "h-10 w-full rounded-lg border border-white/80 bg-white/70 pl-9 pr-3 text-sm font-medium text-ink " +
+  "placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
+const labelCls = "mb-1 mt-3 block text-[11px] font-bold uppercase tracking-wide text-ink/80"
+const iconCls = "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-brand"
 
 const icons = {
   user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
@@ -30,28 +32,42 @@ function Field({ id, label, icon, children }) {
 }
 
 const roles = [
-  { value: 'tenant', title: 'Rent a home', sub: "I'm a tenant" },
-  { value: 'landlord', title: 'List a property', sub: "I'm a landlord" },
+  { value: "tenant", title: "Rent a home", sub: "I'm a tenant" },
+  { value: "landlord", title: "List a property", sub: "I'm a landlord" },
 ]
 
 export default function Register() {
   const [form, setForm] = useState({
-    name: '', phone: '', email: '', password: '', confirm: '', role: 'tenant', terms: false,
+    name: "", phone: "", email: "", password: "", confirm: "", role: "tenant", terms: false,
   })
   const [showPw, setShowPw] = useState(false)
+  const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
-  const mismatch = form.confirm !== '' && form.password !== form.confirm
+  const { register } = useAuth()
+  const navigate = useNavigate()
+
+  const mismatch = form.confirm !== "" && form.password !== form.confirm
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target
-    setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value })
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (mismatch) return
-    const { confirm, terms, ...data } = form
-    console.log('Register (API will be connected later):', data)
+    setError("")
+    setSubmitting(true)
+    try {
+      const { name, phone, email, password, role } = form
+      await register({ name, phone, email, password, role })
+      navigate("/dashboard")
+    } catch (err) {
+      setError(authErrorMessage(err))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -116,20 +132,20 @@ export default function Register() {
 
             <Field id="password" label="Password" icon="lock">
               <input id="password" name="password" required minLength={8} autoComplete="new-password"
-                type={showPw ? 'text' : 'password'} value={form.password} onChange={handleChange}
+                type={showPw ? "text" : "password"} value={form.password} onChange={handleChange}
                 placeholder="At least 8 characters" className={`${inputBase} pr-14`} />
               <button
                 type="button" onClick={() => setShowPw(!showPw)} aria-pressed={showPw}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-brand"
               >
-                {showPw ? 'Hide' : 'Show'}
+                {showPw ? "Hide" : "Show"}
               </button>
             </Field>
 
             <Field id="confirm" label="Confirm password" icon="lock">
               <input id="confirm" name="confirm" required autoComplete="new-password"
-                type={showPw ? 'text' : 'password'} value={form.confirm} onChange={handleChange}
-                aria-invalid={mismatch} aria-describedby={mismatch ? 'confirm-error' : undefined}
+                type={showPw ? "text" : "password"} value={form.confirm} onChange={handleChange}
+                aria-invalid={mismatch} aria-describedby={mismatch ? "confirm-error" : undefined}
                 placeholder="Re-enter your password" className={inputBase} />
             </Field>
             {mismatch && (
@@ -144,13 +160,20 @@ export default function Register() {
               <span>I agree to the Terms &amp; Conditions and Privacy Policy</span>
             </label>
 
-            <button type="submit"
-              className="mt-4 h-11 w-full rounded-full bg-brand text-sm font-bold text-white shadow-md transition hover:brightness-110">
-              Create account
+            {error && (
+              <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-4 h-11 w-full rounded-full bg-brand text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60"
+            >
+              {submitting ? "Creating account..." : "Create account"}
             </button>
 
             <p className="mt-3 border-t border-white/70 pt-3 text-center text-sm text-ink/70">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link to="/login" className="font-bold text-brand">Sign in</Link>
             </p>
           </form>

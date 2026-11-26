@@ -1,25 +1,41 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import Logo from '../components/Logo'
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import Logo from "../components/Logo"
+import { useAuth } from "../context/AuthContext"
+import { authErrorMessage } from "../utils/authErrors"
 
 const inputBase =
-  'h-12 w-full rounded-xl border border-white/80 bg-white/70 pl-11 font-medium text-ink ' +
-  'placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand'
-const label = 'mb-1.5 mt-5 block text-xs font-bold uppercase tracking-wide text-ink/80'
-const iconCls = 'pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-brand'
+  "h-12 w-full rounded-xl border border-white/80 bg-white/70 pl-11 font-medium text-ink " +
+  "placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
+const label = "mb-1.5 mt-5 block text-xs font-bold uppercase tracking-wide text-ink/80"
+const iconCls = "pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-brand"
 
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '', remember: false })
+  const [form, setForm] = useState({ email: "", password: "", remember: false })
   const [showPw, setShowPw] = useState(false)
+  const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target
-    setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value })
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    console.log('Login (API will be connected later):', form)
+    setError("")
+    setSubmitting(true)
+    try {
+      await login(form.email, form.password)
+      navigate("/dashboard")
+    } catch (err) {
+      setError(authErrorMessage(err))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -86,14 +102,14 @@ export default function Login() {
               </svg>
               <input
                 id="password" name="password" required autoComplete="current-password"
-                type={showPw ? 'text' : 'password'}
+                type={showPw ? "text" : "password"}
                 value={form.password} onChange={handleChange}
                 placeholder="Enter your password" className={`${inputBase} pr-12`}
               />
               <button
                 type="button"
                 onClick={() => setShowPw(!showPw)}
-                aria-label={showPw ? 'Hide password' : 'Show password'}
+                aria-label={showPw ? "Hide password" : "Show password"}
                 aria-pressed={showPw}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-brand"
               >
@@ -112,15 +128,20 @@ export default function Login() {
               <Link to="/forgot-password" className="text-sm font-bold text-brand">Forgot password?</Link>
             </div>
 
+            {error && (
+              <p role="alert" className="mb-3 text-sm font-semibold text-red-700">{error}</p>
+            )}
+
             <button
               type="submit"
-              className="h-[50px] w-full rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:brightness-110"
+              disabled={submitting}
+              className="h-[50px] w-full rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60"
             >
-              Sign in
+              {submitting ? "Signing in..." : "Sign in"}
             </button>
 
             <p className="mt-6 border-t border-white/70 pt-5 text-center text-ink/70">
-              New to RentAid?{' '}
+              New to RentAid?{" "}
               <Link to="/register" className="font-bold text-brand">Create an account</Link>
             </p>
           </form>
