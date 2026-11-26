@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useRef, useState } from "react"
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
   deleteUser,
@@ -11,15 +13,20 @@ import { api } from "../services/api"
 
 const AuthContext = createContext(null)
 
+const googleProvider = new GoogleAuthProvider()
+googleProvider.setCustomParameters({ prompt: "select_account" })
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null) // MongoDB profile, includes the role
+  const [fbUser, setFbUser] = useState(null) // Firebase account (may exist without a profile)
   const [loading, setLoading] = useState(true)
   const registering = useRef(false)
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (fbUser) => {
-      if (registering.current) return // register() sets the user itself
-      if (!fbUser) {
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      setFbUser(firebaseUser)
+      if (registering.current) return
+      if (!firebaseUser) {
         setUser(null)
         setLoading(false)
         return
@@ -49,7 +56,6 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       return data.user
     } catch (err) {
-      // avoid a Firebase account without a MongoDB profile
       if (cred) await deleteUser(cred.user).catch(() => {})
       throw err
     } finally {
@@ -69,13 +75,39 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // Google: existing profile -> dashboard, new user -> complete-profile page
+  async function googleSignIn() {
+    const cred = await signInWithPopup(auth, googleProvider)
+    try {
+      const data = await api("/auth/me", { token: await cred.user.getIdToken() })
+      setUser(data.user)
+      return { needsProfile: false, user: data.user }
+    } catch (err) {
+      if (err.status === 404) return { needsProfile: true }
+      await signOut(auth)
+      throw err
+    }
+  }
+
+  // Creates the MongoDB profile for a Google user
+  async function completeProfile({ name, phone, role }) {
+    const data = await api("/auth/register", {
+      method: "POST",
+      body: { name, phone, role },
+    })
+    setUser(data.user)
+    return data.user
+  }
+
   async function logout() {
     await signOut(auth)
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, fbUser, loading, register, login, googleSignIn, completeProfile, logout }}
+    >
       {children}
     </AuthContext.Provider>
   )
