@@ -12,6 +12,7 @@ import Register from './pages/Register'
 import CompleteProfile from './pages/CompleteProfile'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './routes/ProtectedRoute'
+import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
@@ -40,6 +41,8 @@ export default function App() {
       <Route path='/login' element={<Login />} />
       <Route path='/register' element={<Register />} />
       <Route path='/complete-profile' element={<CompleteProfile />} />
+
+      <Route path='*' element={<NotFound />} />
     </Routes>
   )
 }
