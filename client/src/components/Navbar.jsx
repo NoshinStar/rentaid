@@ -38,6 +38,15 @@ function ProfileMenu({ user, onLogout }) {
     }
   }, [open])
 
+  const menuLinks =
+    user.role === 'landlord'
+      ? [
+        { to: '/my-listings', label: 'My listings' },
+        { to: '/listings/new', label: 'Add listing' },
+        { to: '/requests', label: 'Booking requests' },
+      ]
+      : [{ to: '/my-bookings', label: 'My bookings' }]
+
   return (
     <div className="relative" ref={ref}>
       <button
@@ -64,14 +73,17 @@ function ProfileMenu({ user, onLogout }) {
             </span>
           </div>
 
-          <Link
-            to="/dashboard"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="block px-4 py-3 text-[#293345] hover:bg-[#FFF8EF] hover:text-[#824B39]"
-          >
-            Dashboard
-          </Link>
+          {[{ to: '/dashboard', label: 'Dashboard' }, ...menuLinks].map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              role='menuitem'
+              onClick={() => setOpen(false)}
+              className='block px-4 py-3 text-[#293345] hover:bg-[#FFF8EF] hover:text-[#824B39]'
+            >
+              {item.label}
+            </Link>
+          ))}
 
           <button
             type="button"
