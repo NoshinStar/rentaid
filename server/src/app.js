@@ -2,12 +2,16 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 import authRoutes from "./routes/auth.routes.js"
+import listingRoutes from './routes/listing.routes.js'
+import bookingRoutes from './routes/booking.routes.js'
 
 const app = express()
 
 app.use(helmet())
 app.use(cors({ origin: process.env.CLIENT_URL }))
 app.use(express.json())
+app.use('/api/v1/listings', listingRoutes)
+app.use('/api/v1/bookings', bookingRoutes)
 
 app.get("/api/v1/health", (req, res) => {
   res.json({ status: "ok", message: "RentAid API is running" })
