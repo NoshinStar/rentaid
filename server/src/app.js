@@ -4,12 +4,26 @@ import helmet from "helmet"
 import authRoutes from "./routes/auth.routes.js"
 import listingRoutes from './routes/listing.routes.js'
 import bookingRoutes from './routes/booking.routes.js'
+import { connectDB } from './config/db.js'
 
 const app = express()
 
 app.use(helmet())
-app.use(cors({ origin: process.env.CLIENT_URL }))
+app.use(cors({
+  origin: process.env.CLIENT_URL?.split(',').map((s) => s.trim())
+}))
 app.use(express.json())
+
+// Connect to MongoDB before handling a request
+app.use(async (req, res, next) => {
+  try {
+    await connectDB()
+    next()
+  } catch (err) {
+    next(err)
+  }
+})
+
 app.use('/api/v1/listings', listingRoutes)
 app.use('/api/v1/bookings', bookingRoutes)
 
